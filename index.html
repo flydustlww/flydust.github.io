@@ -94,12 +94,12 @@
 
 
 
-<meta name="description" content="any question pls contact liuboying@baidu.com">
+<meta name="description" content="分享使人进步">
 <meta property="og:type" content="website">
 <meta property="og:title" content="山村老腰的博客">
 <meta property="og:url" content="https://flydustlww.github.io/liuboying/index.html">
 <meta property="og:site_name" content="山村老腰的博客">
-<meta property="og:description" content="any question pls contact liuboying@baidu.com">
+<meta property="og:description" content="分享使人进步">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:author" content="liuboying">
 <meta name="twitter:card" content="summary">
@@ -457,7 +457,7 @@
 <p>2 错误写法：import中传入变量</p>
 <figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> aaa = <span class="string">'../views/overview/UnionView'</span>;</span><br><span class="line"><span class="keyword">export</span> <span class="keyword">default</span> [</span><br><span class="line">  &#123;</span><br><span class="line">       path:<span class="string">'/'</span>,</span><br><span class="line">       component: <span class="function"><span class="params">()</span> =&gt;</span> <span class="keyword">import</span>(<span class="comment">/* webpackChunkName: "webco-bundle" */</span> aaa),</span><br><span class="line">       auth: <span class="string">'bqt.cpro.data.tab'</span></span><br><span class="line">  &#125;</span><br><span class="line">]</span><br></pre></td></tr></table></figure>
 
-<p>根据<a href="https://webpack.js.org/api/module-methods/#import" target="_blank" rel="noopener">webpack官方文档</a>，发现有一个黄条提示。<br><img src="img/4165DDF6F891578C9762D7B23.png" alt="import"></p>
+<p>根据<a href="https://webpack.js.org/api/module-methods/#import" target="_blank" rel="noopener">webpack官方文档</a>{target=”_blank”}，发现有一个黄条提示。<br><img src="img/4165DDF6F891578C9762D7B23.png" alt="import"></p>
 <p>问题就在这里，这个现象其实是与webpack import()的实现高度相关的。假如按照<em>代码2</em>的方式运行，webpack其实已经报了一个WARNING: </p>
 <blockquote>
 <p>Critical dependency: the request of a dependency is an expression。</p>
@@ -466,7 +466,7 @@
 <figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> ccc = <span class="string">'UnionView'</span>;</span><br><span class="line"><span class="keyword">export</span> <span class="keyword">default</span> [</span><br><span class="line">  &#123;</span><br><span class="line">       path:<span class="string">'/'</span>,</span><br><span class="line">       component: <span class="function"><span class="params">()</span> =&gt;</span> <span class="keyword">import</span>(<span class="comment">/* webpackChunkName: "webco-bundle" */</span> <span class="string">'../views/overview/'</span> + ccc),</span><br><span class="line">       auth: <span class="string">'bqt.cpro.data.tab'</span></span><br><span class="line">  &#125;</span><br><span class="line">]</span><br></pre></td></tr></table></figure>
 <p>我惊讶的发现，这样改写后，webpack编辑不会报warring了，而且组件编译成功，页面可以正常展示！<br>打印params在看看结构<br><img src="img/66A48516D340601233A2B5E89.png" alt="operator"><br>发现ccc其实并没有解析对正确的字符串，也就说，这里其实执行成了import(‘../views/overview/undefined’)<br>所有../views/overview/下的组件都瞎猫碰死耗子般地被编译到了。<br>假如我们倒过来写成如下，虽然webpack也不会报warning，但是组件没有编译到，页面不能正常展示。</p>
 <figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> ccc = <span class="string">'../views/overview/'</span>;</span><br><span class="line"><span class="keyword">export</span> <span class="keyword">default</span> [</span><br><span class="line">  &#123;</span><br><span class="line">       path:<span class="string">'/'</span>,</span><br><span class="line">       component: <span class="function"><span class="params">()</span> =&gt;</span> <span class="keyword">import</span>(<span class="comment">/* webpackChunkName: "webco-bundle" */</span> <span class="string">''</span> ccc + <span class="string">'UnionView'</span>),</span><br><span class="line">       auth: <span class="string">'bqt.cpro.data.tab'</span></span><br><span class="line">  &#125;</span><br><span class="line">]</span><br></pre></td></tr></table></figure>
-<p>以上是通过阅读源码得到的webpack import中带有变量名时，一会能编译出来，一会儿又编译不出来的定位分析。<br>在看源码的过程中，我发现其实webpack除了支持import，也是支持AMD，require模块的。<br>例如利用require可以写成如下<a href="https://cn.vuejs.org/v2/guide/components-dynamic-async.html" target="_blank" rel="noopener">参考文档</a></p>
+<p>以上是通过阅读源码得到的webpack import中带有变量名时，一会能编译出来，一会儿又编译不出来的定位分析。<br>在看源码的过程中，我发现其实webpack除了支持import，也是支持AMD，require模块的。<br>例如利用require可以写成如下<a href="https://cn.vuejs.org/v2/guide/components-dynamic-async.html" target="_blank" rel="noopener">参考文档</a>{target=”_blank”}</p>
 <figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> aaa = <span class="string">'../views/overview/UnionView'</span>;</span><br><span class="line"><span class="keyword">export</span> <span class="keyword">default</span> [</span><br><span class="line">    &#123;</span><br><span class="line">        path: <span class="string">'/'</span>,</span><br><span class="line">        component: <span class="function"><span class="params">resolve</span> =&gt;</span> <span class="built_in">require</span>([<span class="comment">/* webpackChunkName: "webco-bundle" */</span> aaa], resolve),</span><br><span class="line">        auth: <span class="string">'bqt.cpro.data.tab'</span></span><br><span class="line">    &#125;</span><br><span class="line">]</span><br></pre></td></tr></table></figure>
 
 
@@ -542,7 +542,7 @@
                alt="liuboying" />
           <p class="site-author-name" itemprop="name">liuboying</p>
            
-              <p class="site-description motion-element" itemprop="description">any question pls contact liuboying@baidu.com</p>
+              <p class="site-description motion-element" itemprop="description">分享使人进步</p>
           
         </div>
         <nav class="site-state motion-element">
