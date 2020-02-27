@@ -400,7 +400,7 @@
         
           <h1 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/liuboying/2020/02/25/hello-world/" itemprop="url">import()为什么不能传入变量?</a></h1>
+                <a class="post-title-link" href="/liuboying/2020/02/25/hello-world/" itemprop="url">webpack中import()为什么不能传入变量?</a></h1>
         
 
         <div class="post-meta">
@@ -452,19 +452,18 @@
       
         
           
-            <p>有小伙伴问如下两种写法区别在哪，为什么第二种找不到组件？<br>1 用字符串</p>
+            <p>有小伙伴问如下两种写法区别在哪，为什么第二种找不到组件？<br>1 正确写法：import中传入字符串</p>
 <figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">export</span> <span class="keyword">default</span> [</span><br><span class="line">  &#123;</span><br><span class="line">       path:<span class="string">'/'</span>,</span><br><span class="line">       component: <span class="function"><span class="params">()</span> =&gt;</span> <span class="keyword">import</span>(<span class="comment">/* webpackChunkName: "webco-bundle" */</span> <span class="string">'../views/overview/UnionView'</span>),</span><br><span class="line">       auth: <span class="string">'bqt.cpro.data.tab'</span></span><br><span class="line">  &#125;</span><br><span class="line">]</span><br></pre></td></tr></table></figure>
-<p>2 引入变量</p>
+<p>2 错误写法：import中传入变量</p>
 <figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> aaa = <span class="string">'../views/overview/UnionView'</span>;</span><br><span class="line"><span class="keyword">export</span> <span class="keyword">default</span> [</span><br><span class="line">  &#123;</span><br><span class="line">       path:<span class="string">'/'</span>,</span><br><span class="line">       component: <span class="function"><span class="params">()</span> =&gt;</span> <span class="keyword">import</span>(<span class="comment">/* webpackChunkName: "webco-bundle" */</span> aaa),</span><br><span class="line">       auth: <span class="string">'bqt.cpro.data.tab'</span></span><br><span class="line">  &#125;</span><br><span class="line">]</span><br></pre></td></tr></table></figure>
 
 <p>根据<a href="https://webpack.js.org/api/module-methods/#import" target="_blank" rel="noopener">webpack官方文档</a>，发现有一个黄条提示。<br><img src="img/4165DDF6F891578C9762D7B23.png" alt="import"></p>
 <p>问题就在这里，这个现象其实是与webpack import()的实现高度相关的。<br>由于webpack需要将所有import()的模块都进行单独打包，所以在工程打包阶段，webpack会进行依赖收集。<br>此时，webpack会找到所有import()的调用，将传入的参数处理成一个正则，如：</p>
 <figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span>(<span class="string">'./app'</span>+path+<span class="string">'/util'</span>) =&gt; <span class="regexp">/^\.\/app.*\/util$/</span></span><br></pre></td></tr></table></figure>
-<p>import参数中的所有变量，都会被替换为 .*，而webpack就根据这个正则，查找所有符合条件的包，将其作为package进行打包。<br>因此，如果我们直接传入一个变量，webpack其实已经报了一个WARNING: </p>
+<p>import参数中的所有变量，都会被替换为 .<em>，而webpack就根据这个正则，查找所有符合条件的包，将其作为package进行打包。<br>以上都是我在网上抄来的*经验主意</em>,作为一个程序员还是应该从源码出发，探其究竟的。<br>上面的解释是网上的一段摘抄。另外一种解释说法是</p>
 <blockquote>
-<p>Critical dependency: the request of a dependency is an expression。</p>
+<p>import为静态型，这种行为的本质是会在编译阶段执行，即import命令会有提升效果，提升到整个模块的头部执行。<br>MDN<a href="https://segmentfault.com/q/1010000011585257" target="_blank" rel="noopener">参考文档</a>但我发现在编译过程中，并没有因为import中写如变量而导致编译报错，推测webpack中用的应该是import动态函数的特性<em>（import原来为静态型，后来升级出了个动态函数的用法）</em>两种说法到底哪个是真正原因呢？下面就是我追本溯源，按图索骥的步骤，以及一些思考：<br>按照代码2的方式运行时，webpack其实已经报了一个WARNING:<br>Critical dependency: the request of a dependency is an expression。<br>根据这段提示，我找到了打印这个语句的源码部分<br><img src="img/F871A150429FA3D3D14F57998.png" alt="import"><br>逐步向上寻找，定位到在解析import()加载的包时，会根据import中的参数类型做处理<br><img src="img/266AFBEAE5DAE429F5F74AF3E.png" alt="import"><br>那么问题来了，为什么webpack会将import中的变量替换为.*呢？根据<a href="https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Statements/import" target="_blank" rel="noopener">MDN官方文档</a></p>
 </blockquote>
-<p>那么问题来了，为什么webpack会将import中的变量替换为.*呢？根据<a href="https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Statements/import" target="_blank" rel="noopener">MDN官方文档</a><br>import为静态型，这种行为的本质是会在编译阶段执行，即import命令会有提升效果，提升到整个模块的头部执行<br>More info: <a href="https://segmentfault.com/q/1010000011585257" target="_blank" rel="noopener">参考文档</a></p>
 <p>另外两种可行的写法</p>
 <figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">let</span> Foo = <span class="function"><span class="params">()</span> =&gt;</span> <span class="keyword">import</span>(<span class="comment">/* webpackChunkName: "webco-bundle" */</span> <span class="string">'../views/overview/UnionView'</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">export</span> <span class="keyword">default</span> [</span><br><span class="line">  &#123;</span><br><span class="line">       path:<span class="string">'/'</span>,</span><br><span class="line">       component: Foo,</span><br><span class="line">       auth: <span class="string">'bqt.cpro.data.tab'</span></span><br><span class="line">  &#125;</span><br><span class="line">]</span><br></pre></td></tr></table></figure>
 <p>如果我非要用变量怎么写呢？可以用require，<a href="https://cn.vuejs.org/v2/guide/components-dynamic-async.html" target="_blank" rel="noopener">参考文档</a></p>
