@@ -461,7 +461,7 @@
 <p>2 错误写法：import中传入变量</p>
 <figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> aaa = <span class="string">'../views/overview/UnionView'</span>;</span><br><span class="line"><span class="keyword">export</span> <span class="keyword">default</span> [</span><br><span class="line">  &#123;</span><br><span class="line">       path:<span class="string">'/'</span>,</span><br><span class="line">       component: <span class="function"><span class="params">()</span> =&gt;</span> <span class="keyword">import</span>(<span class="comment">/* webpackChunkName: "webco-bundle" */</span> aaa),</span><br><span class="line">       auth: <span class="string">'bqt.cpro.data.tab'</span></span><br><span class="line">  &#125;</span><br><span class="line">]</span><br></pre></td></tr></table></figure>
 
-<p>根据<a href="https://webpack.js.org/api/module-methods/#import" target="_blank" rel="noopener">webpack官方文档</a>{target=”_blank”}，发现有一个黄条提示。<br><img src="img/4165DDF6F891578C9762D7B23.png" alt="import"></p>
+<p>根据<a href="https://webpack.js.org/api/module-methods/#import" target="_blank" rel="noopener">webpack官方文档</a>{target=”_blank”}，发现有一个黄条提示。<br><img src="../img/4165DDF6F891578C9762D7B23.png" alt="import"></p>
 <p>问题就在这里，这个现象其实是与webpack import()的实现高度相关的。假如按照<em>代码2</em>的方式运行，webpack其实已经报了一个WARNING: </p>
 <blockquote>
 <p>Critical dependency: the request of a dependency is an expression。</p>
